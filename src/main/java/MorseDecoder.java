@@ -47,24 +47,38 @@ public class MorseDecoder {
 
         /*
          * We should check the results of getNumFrames to ensure that they are safe to cast to int.
-         */
-        int totalBinCount = (int) Math.ceil(inputFile.getNumFrames() / BIN_SIZE);
+         */    int totalBinCount = (int) Math.ceil(inputFile.getNumFrames() / BIN_SIZE);
         double[] returnBuffer = new double[totalBinCount];
 
         double[] sampleBuffer = new double[BIN_SIZE * inputFile.getNumChannels()];
         for (int binIndex = 0; binIndex < totalBinCount; binIndex++) {
             // Get the right number of samples from the inputFile
             // Sum all the samples together and store them in the returnBuffer
+            double sum = 0;
+            inputFile.readFrames(sampleBuffer, BIN_SIZE);
+            for (int i = 0; i < sampleBuffer.length; i++) {
+                sum += sampleBuffer[i];
+            }
+            returnBuffer[binIndex] = sum;
         }
         return returnBuffer;
     }
+        int totalBinCount = (int) Math.ceil(inputFile.getNumFrames() / BIN_SIZE);
+        double[] returnBuffer = new double[totalBinCount];
+
+        double[] sampleBuffer = new double[BIN_SIZE * inputFile.getNumChannels()];
+        for(int binIndex = 0; binIndex < totalBinCount; binIndex++) {
+            // Get the right number of samples from the inputFile
+            // Sum all the samples together and store them in the returnBuffer
+        }
+        return returnBuffer;
+
 
     /** Power threshold for power or no power. You may need to modify this value. */
-    private static final double POWER_THRESHOLD = 10;
+    private static final double POWER_THRESHOLD = 1;
 
     /** Bin threshold for dots or dashes. Related to BIN_SIZE. You may need to modify this value. */
     private static final int DASH_BIN_COUNT = 8;
-
     /**
      * Convert power measurements to dots, dashes, and spaces.
      * <p>
@@ -86,8 +100,45 @@ public class MorseDecoder {
         // else if ispower and not waspower
         // else if issilence and wassilence
         // else if issilence and not wassilence
+        System.out.println(Arrays.toString(powerMeasurements));
 
-        return "";
+        String output = "";
+        boolean wasPower = true, isPower = false;
+        int counter = 0;
+
+        //int i = 0; i < powerMeasurements.length; i++
+        for (double measurement : powerMeasurements) {
+            if (measurement > POWER_THRESHOLD) {
+                isPower = true;
+                if (wasPower) {
+                    counter++;
+                } else {
+                    System.out.println(counter);
+                    if (counter > DASH_BIN_COUNT) {
+                        output += " ";
+                    }
+                    counter = 0;
+                }
+                wasPower = isPower;
+            } else {
+                isPower = false;
+                if (wasPower) {
+                    System.out.println(counter);
+                    if (counter > DASH_BIN_COUNT) {
+                        output += "-";
+                    } else {
+                        output += ".";
+                    }
+                    counter = 0;
+                } else {
+                    counter++;
+                }
+                wasPower = isPower;
+            }
+        }
+
+        System.out.println(output);
+        return output;
     }
 
     /**
